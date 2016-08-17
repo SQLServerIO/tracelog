@@ -157,9 +157,22 @@ func StartFile(logLevel int32, baseFilePath string, daysToKeep int) {
 	logger.LogDirectoryCleanup(baseFilePath, daysToKeep)
 }
 
+//StartSingleFile starts logging to a single file expects name to be unique doesn't manage roll over
+//or append to file if it exists
+func StartSingleFile(logLevel int32, fileName string) {
+
+	logf, err := os.Create(fileName)
+	if err != nil {
+		log.Fatalf("main : Start : Failed to Create log file : %s : %s\n", fileName, err)
+	}
+
+	// Turn the logging on
+	turnOnLogging(logLevel, logf)
+}
+
 // Stop will release resources and shutdown all processing.
 func Stop() error {
-	Started("main", "Stop")
+	Started()
 
 	var err error
 	if logger.LogFile != nil {
@@ -167,7 +180,7 @@ func Stop() error {
 		err = logger.LogFile.Close()
 	}
 
-	Completed("main", "Stop")
+	Completed()
 	return err
 }
 
@@ -252,6 +265,7 @@ func turnOnLogging(logLevel int32, fileHandle io.Writer) {
 		errorHandle = os.Stderr
 	}
 
+	//TODO: add flag to route to screen or to log file or both
 	if fileHandle != nil {
 		if traceHandle == os.Stdout {
 			traceHandle = io.MultiWriter(fileHandle, traceHandle)
@@ -287,7 +301,7 @@ func (traceLog *traceLog) LogDirectoryCleanup(baseFilePath string, daysToKeep in
 	// Get a list of existing directories.
 	fileInfos, err := ioutil.ReadDir(baseFilePath)
 	if err != nil {
-		CompletedError(err, "main", "LogDirectoryCleanup")
+		CompletedError(err)
 		return
 	}
 
@@ -350,7 +364,7 @@ func (traceLog *traceLog) LogDirectoryCleanup(baseFilePath string, daysToKeep in
 	// We don't need the catch handler to log any errors.
 	err = nil
 
-	Completed("main", "LogDirectoryCleanup")
+	Completed()
 	return
 }
 
